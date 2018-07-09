@@ -1,30 +1,34 @@
 var express = require('express');
 var multer  = require('multer');
+const uuidv4=require('uuidv4');
+const path=require('path');
+
 
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
-      cb(null, 'uploads/')
+      cb(null, 'uploads/productImages')
     },
     filename: function (req, file, cb) {
-      cb(null, Date.now() + '.jpg') //Appending .jpg
+      cb(null, uuidv4() + path.extname(file.originalname)) 
     }
   })
 var upload = multer({ storage: storage });
   
 // custom
-var User = require('../modules/modules');
+var Module = require('../modules/modules');
 
 var openRouter = express.Router();
+var authRouter = express.Router();
 
-openRouter.post('/profile', upload.single('MyFile'), function (req, res) {
+// openRouter.post('/profile', upload.single('MyFile'), function (req, res) {
    
-    console.log('File is ==>', req.file);
-    console.log('Body is ==>', req.body);
+//     console.log('File is ==>', req.file);
+//     console.log('Body is ==>', req.body);
 
-    User.SaveProducts(req,function(result){
-        res.json(result);
-    })
-})
+//     Module.SaveProducts(req,function(result){
+//         res.json(result);
+//     })
+// })
 
 openRouter.get('/getimage',function(req,res){
     res.sendFile(__dirname+"/uploads/1527064786601.jpg");
@@ -32,13 +36,49 @@ openRouter.get('/getimage',function(req,res){
 
 
 openRouter.post('/register', function (req, res) {
-    User.Register(req.body, function (result) {
+    Module.Register(req.body, function (result) {
         res.json(result);
     });
 });
 
-openRouter.post('/loginVerify',function(req,res){
-    User.LoginVerify(req.body,function(result){
+openRouter.post('/login',function(req,res){
+    
+    Module.LoginVerify(req.body,function(result){
+        res.json(result);
+    })
+})
+
+authRouter.post('/products',upload.single('key'),function(req,res){
+    
+    Module.SaveProdDetails(req,function(result){
+        res.json(result);
+    })
+})
+
+authRouter.get('/products',function(req,res){
+    Module.GetProducts(function(result){
+        res.json(result);
+    })
+})
+
+authRouter.get('/products/images/:imageName',function(req,res){
+    res.sendFile(__dirname.replace('/server/routes','')+'/uploads/productImages/'+req.params.imageName);
+})
+
+authRouter.post('/productid',function(req,res){
+    Module.AddToCart(req,function(result){
+        res.json(result);
+    })
+})
+
+authRouter.get('/cart',function(req,res){
+    Module.GetCart(function(result){
+        res.json(result);
+    })
+})
+
+authRouter.get('/cartlist',function(req,res){
+    Module.GetCartList(function(result){
         res.json(result);
     })
 })
@@ -81,6 +121,7 @@ openRouter.post('/loginVerify',function(req,res){
 
 //     });
 module.exports = {
-    openRouter: openRouter
+    openRouter: openRouter,
+    authRouter:authRouter
 }
 

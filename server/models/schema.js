@@ -20,14 +20,23 @@ var UsersSchema = mongoose.Schema({
 });
 
 var ProductsSchema= mongoose.Schema({
-    name:String,
-    fileName:String
+    ProdName:String,
+    ProdPrice:String,
+    ProdDiscount:String,
+    ProdImgName:String,
 });
+
+var CartSchema=mongoose.Schema({
+    prodId:String,
+    count:Number
+})
 
 var UserModel = mongoose.model('UsersCollection', UsersSchema);
 var ProductsModel = mongoose.model('ProductsCollection',ProductsSchema);
+var CartModel=mongoose.model("CartCollection",CartSchema);
 
 module.exports = {
     UserModel: UserModel,
-    ProductsModel:ProductsModel
+    ProductsModel:ProductsModel,
+    CartModel:CartModel
 }

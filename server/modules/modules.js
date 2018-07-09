@@ -4,7 +4,7 @@ var mongoose = require('mongoose');
 
 
 // custom
-var UserModel = require('../models/schema');
+var Model = require('../models/schema');
 var config = require('../config/config');
 var helpers = require('../helpers/helpers');
 
@@ -13,7 +13,7 @@ var User = function () {
 
 User.prototype.Register = function (cred, callback) {
     var retObj = {};
-    var user = new UserModel.UserModel({
+    var user = new Model.UserModel({
         userName: cred.userName,
         password: helpers.getmd5(cred.password),
         email: cred.email,
@@ -36,7 +36,7 @@ User.prototype.Register = function (cred, callback) {
 
 User.prototype.LoginVerify = function (cred, callback) {
     var retObj = {};
-    UserModel.UserModel.findOne({ email: cred.email }, function (err, user) {
+    Model.UserModel.findOne({ email: cred.email }, function (err, user) {
         if (err) {
             retObj.status = false;
             retObj.message = "Error while getting credentials";
@@ -55,13 +55,15 @@ User.prototype.LoginVerify = function (cred, callback) {
     })
 }
 
-User.prototype.SaveProducts=function(details,callback){
+User.prototype.SaveProdDetails=function(details,callback){
     var retObj={};
-    var product = new UserModel.ProductsModel({
-        name: details.body.Name,
-        fileName:details.file.filename
+    var product = new Model.ProductsModel({
+        ProdName: details.body.proName,
+        ProdPrice:details.body.proPrice,
+        ProdDiscount:details.body.proDiscount,
+        ProdImgName:details.file.filename
     })
-    product.save(function (err) {
+    product.save(function(err){
         if (err) {
             retObj.status = false;
             retObj.message = "Error while saving the credentials";
@@ -75,25 +77,86 @@ User.prototype.SaveProducts=function(details,callback){
     })
 }
 
-// fun.prototype.loginVerify = function (cred, callback) {
-//     var retObj = {};
-//     user.userModel.findOne({ email: cred.email }, function (err, userDetails) {
-//         if (err) {
-//             retObj.status = false;
-//             retObj.message = "Error while getting credentials";
-//             callback(retObj);
-//         } else if (userDetails && userDetails.password === cred.password) {
-//             retObj.status = true;
-//             retObj.message = "You are successfully logged in"
-//             callback(retObj);
-//         } else {
-//             retObj.status = false;
-//             retObj.message = "Invalid credentials";
-//             callback(retObj);
-//         }
-//     })
-// }
+User.prototype.GetProducts=function(callback){
+    var retObj={};
+    Model.ProductsModel.find(function(err,docs){
+        if(err){
+            retObj.status=false;
+            retObj.message="Error while getting products data";
+            callback(retObj);
+        }else{
+            retObj.status=true;
+            retObj.message="Successfully got the products data";
+            retObj.data=docs;
+            callback(retObj);
+        }
+    })
+}
 
+User.prototype.AddToCart=function(data,callback){
+    var retObj={};
+    console.log("-------------------",data.body.ProductId)
+    ProductIdTosave=new Model.CartModel({
+        prodId:data.body.ProductId,
+        count:1
+    })
+    ProductIdTosave.save(function(err){
+        if (err) {
+            retObj.status = false;
+            retObj.message = "Error while saving the product id";
+            retObj.error = err;
+            callback(retObj);
+        } else {
+            retObj.status = true;
+            retObj.message = "Product id is saved successfully in database";
+            callback(retObj);
+        }
+    })
+}
+
+User.prototype.GetCart=function(callback){
+    var retObj={};
+    Model.CartModel.find(function(err,docs){
+        if(err){
+            retObj.status=false;
+            retObj.message="Error while getting cart data";
+            callback(retObj);
+        }else{
+            retObj.status=true;
+            retObj.message="Successfully got the cart data";
+            retObj.data=docs;
+            callback(retObj);
+        }
+    })
+}
+
+User.prototype.GetCartList=function(callback){
+    var retObj={};
+    Model.CartModel.find(function(err,docs){
+        if(err){
+            retObj.status=false;
+            retObj.message="Error while getting cart data";
+            callback(retObj);
+        }else{
+            var productIds=[];
+            for(var i=0;i<docs.length;i++){
+                productIds.push(docs[i].prodId);
+             }
+             Model.ProductsModel.find({"_id" : {"$in" : productIds}},function(err,productsData){
+                if(err){
+                    retObj.status=false;
+                    retObj.message="Error while getting cart list data";
+                    callback(retObj);
+                }else{
+                    retObj.status=true;
+                    retObj.message="Successfully got the cart list data";
+                    retObj.data=productsData;
+                    callback(retObj);
+                }
+             })
+        }
+    })
+}
 // fun.prototype.getAllUsers = function (callback) {
 //     var retObj = {};
 //     user.userModel.find(function (err, docs) {
@@ -134,5 +197,6 @@ User.prototype.SaveProducts=function(details,callback){
 //     console.log("here in req . file is ====>",req.file);
 //     callback("record inserted");
 // }
+
 
 module.exports = new User();
